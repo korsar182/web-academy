@@ -9,6 +9,22 @@
   roles:
     - geerlingguy.ntp
 
+- name: generate ssh keys for user lab
+  hosts: localhost
+  tasks:
+    - name: key-gen
+      shell:
+        cmd: 'user=lab ; ssh-keygen -t ecdsa -b 521 -C "$user" -N "" -f ~/.ssh/$user 1> /dev/null ; cat ~/.ssh/$user.pub'
+      register: key_lab
+
+- name: generate ssh keys for user labsudo
+  hosts: localhost
+  tasks:
+    - name: key-gen
+      shell:
+        cmd: 'user=labsudo ; ssh-keygen -t ecdsa -b 521 -C "$user" -N "" -f ~/.ssh/$user 1> /dev/null ; cat ~/.ssh/$user.pub'
+      register: key_labsudo
+
 - name: add user labsudo
   hosts: servers
   become: true
@@ -18,8 +34,7 @@
         username: labsudo
         groups: [sudo]
         shell: /bin/bash
-        ssh_key:
-          - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDVpUJQCOaPg3p5xro9e+1fkGRWNOGrrExiKMqTE91Fwu349bxfMnMzRS0PAERouR9EEL+Ee4Yzhav/uNc35eCtXzACtluXnAncMrQj6pM3IqASynhvXTygHljmcMbBSDQtLrTZeW+YzIcOgk5UM1yBi26Wo$"
+        ssh_key: "{{ hostvars['localhost']['key_labsudo'].stdout_lines }}"
   roles:
     - singleplatform-eng.users
 
@@ -31,8 +46,7 @@
       - name: lab
         username: lab
         shell: /bin/bash
-        ssh_key:
-          - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDVpUJQCOaPg3p5xro9e+1fkGRWNOGrrExiKMqTE91Fwu349bxfMnMzRS0PAERouR9EEL+Ee4Yzhav/uNc35eCtXzACtluXnAncMrQj6pM3IqASynhvXTygHljmcMbBSDQtLrTZeW+YzIcOgk5UM1yBi26Wo$"
+        ssh_key: "{{ hostvars['localhost']['key_lab'].stdout_lines }}"
   roles:
     - singleplatform-eng.users
 
